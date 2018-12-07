@@ -62,54 +62,22 @@ while len(remainingSteps) != 0:
 
 print "".join(stepOrder)
 
-'''
+
 second = 0
-availableWorkers = 5
 remainingSteps = dict(steps)
-stepsInProgress = []
 
 while len(remainingSteps) != 0:
     print "--------------------"
 
+    # Update worker status
+    # Remove complete steps
+
     # Find Ready Steps
-    allReadySteps = []
-    for s in remainingSteps:
-        if len(remainingSteps[s]) == 0: allReadySteps.append(s)
 
-    allReadySteps.sort()
+    # Start new steps based on free workers
 
-    # Start steps
-
-    # check for complete steps
-
-    # free workers
-
-    # remove complete deps
-
-    nextStep = allReadySteps[0]
-
-    stepOrder.append(nextStep)
-
-    # Remove
-    print "ready steps = " + str(allReadySteps)
-    del remainingSteps[nextStep]
-
-    # Execute Steps
-    for s in remainingSteps:
-        i=0
-        for d in remainingSteps[s]:
-            if d == nextStep: del remainingSteps[s][i]
-            i+=1
-
-
-    for s in remainingSteps:
-        print s, " <- ", str(remainingSteps[s])
-
-
-    assert len(stepsInProgress) <= 5, "too many in progress steps!"
-
+    # increment second
     second += 1
-'''
 
 
 
