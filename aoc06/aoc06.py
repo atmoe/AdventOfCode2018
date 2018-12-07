@@ -11,6 +11,8 @@ class Coordinate:
         self.x = x
         self.y = y
         self.name = name
+        self.infinite = False
+        self.area = 0
 
 def manhattanDistance(c0, c1):
     return abs(c0.x - c1.x) + abs(c0.y - c1.y)
@@ -37,7 +39,7 @@ for line in inputFile.readlines():
     if(x > maxX): maxX = x
     if(y > maxY): maxY = y
 
-    coord = Coordinate(x, y, chr(ord('A') + len(coords)))
+    coord = Coordinate(x, y, str(chr(ord('A') + len(coords))))
     coords.append(coord)
 
 inputFile.close()
@@ -50,12 +52,6 @@ if enablePrintCoords:
 print "Grid Extent = (" + str(minX) + ", " + str(minY) + ") -> (" + str(maxX) + ", " + str(maxY) + ")"
 
 grid = [["o" for x in range(maxX+1)] for y in range(maxY+1)]
-
-enableGridPrint = True
-if enableGridPrint: 
-    for g in grid:
-        print g
-    print "--------------------------------------"
 
 for y in range(maxY+1):
     for x in range(maxX+1):
@@ -75,6 +71,33 @@ for y in range(maxY+1):
 
         grid[y][x] = minCoord.name
 
-if enableGridPrint: 
-    for g in grid:
-        print g
+coordHash={}
+for c in coords:
+    coordHash[c.name] = c
+
+for y in range(maxY+1):
+    for x in range(maxX+1):
+        if grid[y][x] == ".": continue
+        if x == 0 or y == 0 or x==maxX or y==maxY: coordHash[grid[y][x]].infinite = True
+
+        coordHash[grid[y][x]].area += 1
+
+maxArea = 0
+for c in coords:
+    if not c.infinite and (c.area > maxArea): maxArea=c.area
+
+print "max area = " + str(maxArea)
+
+
+totalDistGrid = [[0 for x in range(maxX+1)] for y in range(maxY+1)]
+totalLessThanThreshold = 0
+threshold = 10000
+for y in range(maxY+1):
+    for x in range(maxX+1):
+        gridCoord = Coordinate(x,y, "n/a")
+        for coord in coords:
+            totalDistGrid[y][x] += manhattanDistance(gridCoord, coord)
+        if totalDistGrid[y][x] < threshold: totalLessThanThreshold+=1
+
+print "total less than " + str(threshold) + " = " + str(totalLessThanThreshold)
+
