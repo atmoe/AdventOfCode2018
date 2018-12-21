@@ -35,35 +35,35 @@
 
 
 reg1 = 0
-while reg0 != reg1
-    reg4 = reg1 | 0x10000
-    reg1 = 0x39f737
+reg4 = reg1 | 0x10000
+reg1 = 0x39f737
 
-    while reg2 < reg4:
-        reg5 = reg4 & 0xff
-        reg1 = reg1 + reg5
-        reg1 = reg1 & 0xffffff
-        reg1 = reg1 * 0x1035
-        reg1 = reg1 & 0xffffff
-        reg5 = 256 > reg4
-        if(reg4 < 256)
-            if(reg1 == reg0)
-                return
+while 1:
+    reg5 = reg4 & 0xff
+    reg1 = reg1 + reg5
+    reg1 = reg1 & 0xffffff
+    reg1 = reg1 * 0x1035
+    reg1 = reg1 & 0xffffff
+    if(reg4 < 256)
+        if(reg1 == reg0)
+            return
+        else
+            reg4 = reg1 | 0x10000
+            reg1 = 0x39f737
+    else        
+        reg4 = reg4 >> 8
         
-        reg5 = 0
-        while reg2 <= reg4
-            reg2 = reg5 + 1
-            reg2 = reg2 * 256
-
-
-            if (reg2 > reg4)
-                reg4 = reg5
-            else 
-                reg5 += 1
 
 
 
+x = 0x39f737
+y = 0x10000
 
+while x != reg0
+    while y >=256:
+        x = (((x + y %256) %0xffffff) * 65899) % 0xffffff
+        y = y>>8
+    y = x | 0x10000
 
 
 
