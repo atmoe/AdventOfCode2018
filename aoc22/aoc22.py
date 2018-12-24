@@ -57,22 +57,20 @@ class GraphVert:
         if neighborRType == self.rType:
             return 1 # same type
 
-        if "t" in self.tools:
-            if   neighborRType==0: return 1 # torch goes to rocky in 1 min
-            elif neighborRType==2: return 1 # torch goes to narrow in 1 min
+        if neighborRType==0:
+            if   "t" in self.tools: return 1 # torch    is 1 to go to rocky
+            elif "c" in self.tools: return 1 # climbing is 1 to go to rocky
+            else:                   return 8 # must switch away from neither
 
-        if "c" in self.tools:
-            if   neighborRType==0: return 1 # climbing goes to rocky in 1 min
-            elif neighborRType==1: return 1 # climbing goes to wet in 1 min
+        elif neighborRType==1:
+            if   "c" in self.tools: return 1 # climbing is 1 to go to wet
+            elif "n" in self.tools: return 1 # neither  is 1 to go to wet
+            else:                   return 8 # must switch away from torch
 
-        if "n" in self.tools:
-            if   neighborRType==1: return 1 # neither goes to wet in 1 min
-            elif neighborRType==2: return 1 # neither goes to narrow in 1 min
-
-        # Check for 8-cost
-        if   neighborRType==1: return 8 # no wet torch - must change to climbing or neither
-        elif neighborRType==2: return 8 # no narrow climbing - cmust change to torch or neither
-        elif neighborRType==0: return 8 # no rock neither - must change to climbing or torch
+        elif neighborRType==2:
+            if   "t" in self.tools: return 1 # torch   is 1 to go to narrow
+            elif "n" in self.tools: return 1 # neither is 1 to go to narrow
+            else:                   return 8 # must switch away from climbing
 
         assert 0, "no cost found!"
 
@@ -81,24 +79,43 @@ class GraphVert:
         if neighborRType == self.rType:
             return self.tools
 
-        if "t" in self.tools:
-            if   neighborRType==0: return ["t", "inv"] # torch goes to rocky in 1 min
-            elif neighborRType==2: return ["t", "inv"] # torch goes to narrow in 1 min
+        newTools = []
+        if neighborRType==0:
+            if "t" in self.tools:
+                newTools.append("t")
+            if "c" in self.tools:
+                newTools.append("c")
 
-        if "c" in self.tools:
-            if   neighborRType==0: return ["c", "inv"] # climbing goes to rocky in 1 min
-            elif neighborRType==1: return ["c", "inv"] # climbing goes to wet in 1 min
+            if not "t" in self.tools and not "c" in self.tools and "n" in self.tools:
+                # no neither rock, had to switch, two options
+                newTools.append("c")
+                newTools.append("t")
 
-        if "n" in self.tools:
-            if   neighborRType==1: return ["n", "inv"] # neither goes to wet in 1 min
-            elif neighborRType==2: return ["n", "inv"] # neither goes to narrow in 1 min
+        elif neighborRType==1:
+            if "n" in self.tools:
+                newTools.append("n")
+            if "c" in self.tools:
+                newTools.append("c")
 
-        # Check for 8-cost
-        if   neighborRType==1: return ["c", "n"] # no wet torch - must change to climbing or neither
-        elif neighborRType==2: return ["t", "n"] # no narrow climbing - cmust change to torch or neither
-        elif neighborRType==0: return ["c", "t"] # no rock neither - must change to climbing or torch
+            if not "n" in self.tools and not "c" in self.tools and "t" in self.tools:
+                # no wet torch, had to switch, two options
+                newTools.append("n")
+                newTools.append("c")
 
-        assert 0, "no tools found!"
+        elif neighborRType==2:
+            if "t" in self.tools:
+                newTools.append("t")
+            if "n" in self.tools:
+                newTools.append("n")
+
+            if not "t" in self.tools and not "n" in self.tools and "c" in self.tools:
+                # no narrow climbing, had to switch, two options
+                newTools.append("t")
+                newTools.append("n")
+
+        return newTools
+
+        assert 0, "no tools found! currentTools = {} {}"
 
 assert len(sys.argv) == 2, sys.argv[0] + " requires 1 arguments!"
 
@@ -112,8 +129,10 @@ inputFile.close()
 print "depth = {}".format(depth)
 print "target = {}".format(target.getStr())
 
-gridWidth  = target.x+1 + 500
-gridHeight = target.y+1 + 300
+gridBloat = 1000
+
+gridWidth  = target.x+1 + gridBloat
+gridHeight = target.y+1 + gridBloat
 geologicIdx = [[-1 for x in range(gridWidth)] for y in range(gridHeight)]
 erosionLvl  = [[-1 for x in range(gridWidth)] for y in range(gridHeight)]
 regionType  = [[-1 for x in range(gridWidth)] for y in range(gridHeight)]
@@ -134,7 +153,7 @@ for y in range(gridHeight):
 
         erosionLvl[y][x] = (geologicIdx[y][x] + depth) % 20183
         regionType[y][x] = erosionLvl[y][x] % 3
-
+'''
 for y in range(gridHeight):
     for x in range(gridWidth):
         rType = regionType[y][x]
@@ -145,6 +164,7 @@ for y in range(gridHeight):
         elif rType == 2:                  sys.stdout.write("|")
     sys.stdout.write("\n") 
     sys.stdout.flush()
+'''
 
 totalRisk = 0
 for y in range(target.y+1):
@@ -154,12 +174,9 @@ for y in range(target.y+1):
 print "totalRisk = {}".format(totalRisk)
 
 graph = [[GraphVert(0,0,0) for x in range(gridWidth)] for y in range(gridHeight)]
-vertPool = []
 for y in range(gridHeight):
     for x in range(gridWidth):
         graph[y][x] = GraphVert(x,y,regionType[y][x])
-        if y <= target.y and x <= target.x:
-            vertPool.append(graph[y][x])
 
 # tools:
 #   t - torch
@@ -172,12 +189,14 @@ graph[0][0].atMin = False
 
 currWidth  = target.x+1
 currHeight = target.y+1
-totalVerts = currWidth * currHeight
+totalVerts = gridWidth * gridHeight
 vertNum = 0
 vertsNotAtMin = True
+vertPool = []
+vertPool.append(graph[0][0])
 while vertsNotAtMin:
     #print "---------------"
-    if vertNum%100==0: print "Vert {0} ({1:3.2}%) ({2:3.2}%)".format(vertNum, vertNum/float(totalVerts)*100, vertNum/float(gridHeight*gridWidth)*100)
+
     # find min vert
     minDist = 1000000000
     minVert = None
@@ -188,38 +207,26 @@ while vertsNotAtMin:
 
     minVert.atMin = True
     vertPool.remove(minVert)
-    #assert minVert.y+1 < gridHeight, "grid not tall enough, minVert at ({},{})".format(minVert.x, minVert.y)
-    #assert minVert.x+1 < gridWidth,  "grid not wide enough, minVert at ({},{})".format(minVert.x, minVert.y)
+    assert minVert.y+1 < gridHeight, "grid not tall enough, minVert at ({},{})".format(minVert.x, minVert.y)
+    assert minVert.x+1 < gridWidth,  "grid not wide enough, minVert at ({},{})".format(minVert.x, minVert.y)
 
-    #print "Min type  = {}".format(minVert.rType)
-    #print "Min tools = ", " ".join(minVert.tools)
-
-    if minVert.y == currHeight-1:
-        for x in range(currWidth):
-            vertPool.append(graph[minVert.y+1][x])
-        currHeight+=1
-        totalVerts += currWidth
-
-    if minVert.x == currWidth-1:
-        for y in range(currHeight):
-            vertPool.append(graph[y][minVert.x+1])
-        currWidth+=1
-        totalVerts += currHeight
+    if vertNum%100==0: 
+        print "Vert {0} ({1:.3}%) pos=({2},{3}) dist = {4}".format(vertNum, vertNum/float(totalVerts)*100, minVert.x, minVert.y, minVert.dist)
 
     #### update neighbors
     nVerts = []
     if minVert.y!=0:
         nVerts.append(graph[minVert.y-1][minVert.x]) # up
-        #print "up neighbor type = {}, cost = {}".format(nVerts[-1].rType, minVert.costToNeighbor(nVerts[-1].rType))
     if minVert.x!=0:
         nVerts.append(graph[minVert.y][minVert.x-1]) # left
-        #print "left neighbor type = {}, cost = {}".format(nVerts[-1].rType, minVert.costToNeighbor(nVerts[-1].rType))
     nVerts.append(graph[minVert.y+1][minVert.x]) # down
-    #print "down neighbor type = {}, cost = {}".format(nVerts[-1].rType, minVert.costToNeighbor(nVerts[-1].rType))
     nVerts.append(graph[minVert.y][minVert.x+1]) # right
-    #print "right neighbor type = {}, cost = {}".format(nVerts[-1].rType, minVert.costToNeighbor(nVerts[-1].rType))
 
     for idx,v in enumerate(nVerts):
+        if v.dist == 1000000000:
+            # first time visiting this vert, add to pool
+            vertPool.append(v)
+
         costToV      = minVert.costToNeighbor(v.rType)
         toolsForMove = minVert.toolsToN(v.rType)
         v.updateCost(costToV + minVert.dist, toolsForMove)
