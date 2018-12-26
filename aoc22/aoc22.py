@@ -198,7 +198,6 @@ vertsNotAtMin = True
 vertPool = []
 vertPool.append(graph[0][0])
 while vertsNotAtMin:
-    print "---------------"
 
     # find min vert
     minDist = 1000000000
@@ -244,20 +243,23 @@ while vertsNotAtMin:
     if minVert.x == target.x and minVert.y == target.y:
         if not "t" in minVert.tools:
             minVert.dist += 7
-            vertsNotAtMin = False
 
-    for row in range(currHeight+2):
-        for col in range(currWidth+2):
-            v = graph[row][col]
-            if v.atMin==True: minStr = "*"
-            else:             minStr = " "
-            if minVert==v:
-                print "xx {0:4} xxx".format(minVert.dist),
-            else:
-                print "{0:10}{1}".format(v.dist,minStr),
-        print
+        vertsNotAtMin = False
 
-    a = raw_input()
+    if printGrid:
+        print "---------------"
+        for row in range(currHeight+2):
+            for col in range(currWidth+2):
+                v = graph[row][col]
+                if v.atMin==True: minStr = "*"
+                else:             minStr = " "
+                if minVert==v:
+                    print "xx {0:4} xxx".format(minVert.dist),
+                else:
+                    print "{0:10}{1}".format(v.dist,minStr),
+            print
+
+        a = raw_input()
 
 
 print "---------------"
