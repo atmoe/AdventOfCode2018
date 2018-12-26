@@ -47,6 +47,11 @@ class Group:
 
         return grpStr
 
+    def getShortStr(self):
+        grpStr =  "{} Group {} has {} units with eff. power of {}".format(self.gType, self.num, self.numUnits, self.effectivePower())
+
+        return grpStr
+
 def setTargets(attackers, defenders):
     targets = {}
     for a in attackers:
@@ -56,6 +61,7 @@ def setTargets(attackers, defenders):
         for d in defenders:
             if d.isDead(): continue
             if d in targets.values() : continue
+            if a.getDamageTo(d) == 0 : continue
 
             if target==None:
                 target = d
@@ -85,7 +91,7 @@ infectGrpNum = 1
 for line in inputFile.readlines():
     immune    = re.match("^Immune System:", line)
     infection = re.match("^Infection:", line)
-    group     = re.match("(\d+) units each with (\d+) hit points (\(.*\) )with an attack that does (\d+) (\S+) damage at initiative (\d+)", line)
+    group     = re.match("(\d+) units each with (\d+) hit points (\(.*\) |)with an attack that does (\d+) (\S+) damage at initiative (\d+)", line)
 
     if immune:
         gettingImmune = True
@@ -96,7 +102,6 @@ for line in inputFile.readlines():
         gettingInfection = True
 
     if group:
-        print "here!"
         numUnits   = int(group.group(1))
         hp         = int(group.group(2))
         ap         = int(group.group(4))
@@ -117,6 +122,10 @@ for line in inputFile.readlines():
 
 inputFile.close()
 
+boost = 0 # modify for part 2
+for g in immuneGroups:
+    g.ap += boost
+
 print "Immune System:"
 for g in immuneGroups:
     print g.getStr()
@@ -125,6 +134,9 @@ print
 print "Infection:"
 for g in infectionGroups:
     print g.getStr()
+
+print "#Infect Groups = {} #immune = {}".format(len(infectionGroups), len(immuneGroups))
+
 infectHasGrps = True
 immuneHasGrps = True
 turn = 0
@@ -132,6 +144,21 @@ while infectHasGrps and immuneHasGrps:
     print "==========================================="
     print "=== Turn {}".format(turn)
     print "==========================================="
+
+    print "Immune System:"
+    immuneHasGrps = False
+    for g in immuneGroups:
+        if g.numUnits > 0:
+            immuneHasGrps = True
+            print g.getShortStr()
+
+    print
+    print "Infection:"
+    infectHasGrps = False
+    for g in infectionGroups:
+        if g.numUnits > 0:
+            infectHasGrps = True
+            print g.getShortStr()
 
     # Target Phase
 
@@ -149,6 +176,7 @@ while infectHasGrps and immuneHasGrps:
     allGroups = immuneGroups + infectionGroups
     allGroups.sort(key=lambda c: c.initiative, reverse=True)
 
+    print "=== Attacks ==="
     for attacker in allGroups:
         if attacker.isDead(): continue
 
@@ -156,33 +184,25 @@ while infectHasGrps and immuneHasGrps:
         elif attacker.gType=="Infect" and attacker in infectTargets.keys(): target = infectTargets[attacker]
         else: continue
 
-        damage = attacker.getDamageTo(target)
-        target.takeDamage(damage)
+        if target != None:
+            damage = attacker.getDamageTo(target)
+            target.takeDamage(damage)
 
-        print "{} {} attacks {} {} for {} damage".format(attacker.gType, attacker.num, target.gType, target.num, damage)
+            print "{} {} attacks {} {} for {} damage".format(attacker.gType, attacker.num, target.gType, target.num, damage)
 
-    print "Immune System:"
-    immuneHasGrps = False
-    for g in immuneGroups:
-        if g.numUnits > 0:
-            immuneHasGrps = True
-            print g.getStr()
+    turn+=1
 
-    print
-    print "Infection:"
-    infectHasGrps = False
-    for g in infectionGroups:
-        if g.numUnits > 0:
-            infectHasGrps = True
-            print g.getStr()
+    #a = raw_input()
 
 
 totalUnits = 0
 allGroups = immuneGroups+infectionGroups
 for g in allGroups:
-    if g.numUnits > 0: totalUnits+=g.numUnits
+    if g.isDead(): continue
 
-print numUnits
+    totalUnits+=g.numUnits
+
+print totalUnits
 
 
 
