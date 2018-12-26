@@ -76,10 +76,12 @@ class GraphVert:
 
     def toolsToN(self, neighborRType):
         # Check for 1-cost
-        if neighborRType == self.rType:
-            return self.tools
-
         newTools = []
+        if neighborRType == self.rType:
+            for t in self.tools:
+                newTools.append(t)
+            return newTools
+
         if neighborRType==0:
             if "t" in self.tools:
                 newTools.append("t")
@@ -185,18 +187,18 @@ for y in range(gridHeight):
 #   n - neither
 #   inv - invalid
 graph[0][0].dist = 0
-graph[0][0].tools = ["t", "inv"]
+graph[0][0].tools = ["t"]
 graph[0][0].atMin = False
 
-currWidth  = target.x+1
-currHeight = target.y+1
+currWidth  = 1
+currHeight = 1
 totalVerts = gridWidth * gridHeight
 vertNum = 0
 vertsNotAtMin = True
 vertPool = []
 vertPool.append(graph[0][0])
 while vertsNotAtMin:
-    #print "---------------"
+    print "---------------"
 
     # find min vert
     minDist = 1000000000
@@ -207,6 +209,8 @@ while vertsNotAtMin:
             minVert = v
 
     minVert.atMin = True
+    if minVert.x+1 > currWidth:  currWidth  = minVert.x + 1
+    if minVert.y+1 > currHeight: currHeight = minVert.y + 1
     vertPool.remove(minVert)
     assert minVert.y+1 < gridHeight, "grid not tall enough, minVert at ({},{})".format(minVert.x, minVert.y)
     assert minVert.x+1 < gridWidth,  "grid not wide enough, minVert at ({},{})".format(minVert.x, minVert.y)
@@ -241,15 +245,20 @@ while vertsNotAtMin:
         if not "t" in minVert.tools:
             minVert.dist += 7
             vertsNotAtMin = False
-'''
-    for row in graph:
-        for v in row:
+
+    for row in range(currHeight+2):
+        for col in range(currWidth+2):
+            v = graph[row][col]
+            if v.atMin==True: minStr = "*"
+            else:             minStr = " "
             if minVert==v:
-                print "xx {0:4} xx".format(minVert.dist),
+                print "xx {0:4} xxx".format(minVert.dist),
             else:
-                print "{0:10}".format(v.dist),
+                print "{0:10}{1}".format(v.dist,minStr),
         print
-'''
+
+    a = raw_input()
+
 
 print "---------------"
 print "Min Vert Dist = {}".format(minVert.dist)
