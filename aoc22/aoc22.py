@@ -135,16 +135,18 @@ for y in range(gridHeight):
         erosionLvl[y][x] = (geologicIdx[y][x] + depth) % 20183
         regionType[y][x] = erosionLvl[y][x] % 3
 
-for y in range(gridHeight):
-    for x in range(gridWidth):
-        rType = regionType[y][x]
-        if x==0 and y==0:                 sys.stdout.write("M")
-        elif x==target.x and y==target.y: sys.stdout.write("T")
-        elif rType == 0:                  sys.stdout.write(".")
-        elif rType == 1:                  sys.stdout.write("=")
-        elif rType == 2:                  sys.stdout.write("|")
-    sys.stdout.write("\n") 
-    sys.stdout.flush()
+printGrid = False
+if printGrid:
+    for y in range(gridHeight):
+        for x in range(gridWidth):
+            rType = regionType[y][x]
+            if x==0 and y==0:                 sys.stdout.write("M")
+            elif x==target.x and y==target.y: sys.stdout.write("T")
+            elif rType == 0:                  sys.stdout.write(".")
+            elif rType == 1:                  sys.stdout.write("=")
+            elif rType == 2:                  sys.stdout.write("|")
+        sys.stdout.write("\n") 
+        sys.stdout.flush()
 
 totalRisk = 0
 for y in range(target.y+1):
