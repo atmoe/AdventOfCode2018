@@ -47,6 +47,10 @@ class GraphVert:
         if newDist < self.dist: 
             self.dist  = newDist
             self.tools = tools
+        elif newDist == self.dist:
+            for t in tools:
+                if not t in self.tools:
+                    self.tools.append(t)
 
     # rType 0 - rock
     # rType 1 - wet
@@ -214,7 +218,7 @@ while vertsNotAtMin:
     assert minVert.y+1 < gridHeight, "grid not tall enough, minVert at ({},{})".format(minVert.x, minVert.y)
     assert minVert.x+1 < gridWidth,  "grid not wide enough, minVert at ({},{})".format(minVert.x, minVert.y)
 
-    if vertNum%100==0: 
+    if vertNum%1000==0: 
         print "Vert {0} ({1:.3}%) pos=({2},{3}) dist = {4}".format(vertNum, vertNum/float(totalVerts)*100, minVert.x, minVert.y, minVert.dist)
 
     #### update neighbors
