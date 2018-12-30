@@ -36,13 +36,12 @@ class Box:
 
         #self.distOrigin = 
     def addPotentialBot(self, bot):
-        closestX = max(self.corner.x, min(bot.loc.x, self.corner.x + self.w))
-        closestY = max(self.corner.y, min(bot.loc.y, self.corner.x + self.h))
-        closestZ = max(self.corner.z, min(bot.loc.z, self.corner.x + self.d))
+        closestX = max(self.corner.x, min(bot.loc.x, self.corner.x + self.w - 1))
+        closestY = max(self.corner.y, min(bot.loc.y, self.corner.y + self.h - 1))
+        closestZ = max(self.corner.z, min(bot.loc.z, self.corner.z + self.d - 1))
 
-        botIntersects = bot.loc.distTo(Location(closestX,closestY,closestZ)) < bot.r
-
-        if botIntersects: self.bots.append(bot)
+        if bot.loc.distTo(Location(closestX,closestY,closestZ)) <= bot.r:
+            self.bots.append(bot)
 
     def getStr(self):
         return "Box @ {}\t{}x{}x{}\t(v={}):\t{} bots".format(self.corner.getStr(), self.w, self.h, self.d, self.vol, len(self.bots))
@@ -90,7 +89,7 @@ print "Strongest Bot = {} r = {}".format(strongestBot.loc.getStr(), strongestBot
 print "Weakest Bot = {} r = {}".format(weakestBot.loc.getStr(), weakestBot.r)
 print "Total Bots = {}".format(len(bots))
 
-initBox = Box(minLoc, maxLoc.x - minLoc.x, maxLoc.y - minLoc.y, maxLoc.z - minLoc.z)
+initBox = Box(minLoc, maxLoc.x - minLoc.x + 1, maxLoc.y - minLoc.y + 1, maxLoc.z - minLoc.z + 1)
 for b in bots:
     initBox.addPotentialBot(b)
 
@@ -112,6 +111,10 @@ while not foundOneVolBox:
             currBox = b
             currBoxIdx = idx
             maxBots = len(b.bots)
+
+    if currBox.vol == 1:
+        foundOneVolBox = True
+        break
 
     del boxes[currBoxIdx]
 
@@ -178,15 +181,21 @@ while not foundOneVolBox:
         if len(v.bots) > 0:
             boxes.append(v)
 
-        if v.vol == 1:
-            foundOneVolBox = True
-
     #print "----------------"
     #for idx, v in enumerate(subVols):
     #    print v.getStr()
+print "======================"
+maxBots = 0
+optimalBox = None
+for idx,b in enumerate(boxes):
+    print b.getStr()
+    if b.vol > 1: continue
+    if len(b.bots) > maxBots:
+        optimalBox = b
+        maxBots = len(b.bots)
 
 print "----------------"
 print "optimal location:"
-print boxes[-1].getStr()
+print optimalBox.getStr()
 
 
