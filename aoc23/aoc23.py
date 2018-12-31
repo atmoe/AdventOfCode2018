@@ -43,6 +43,14 @@ class Box:
         if bot.loc.distTo(Location(closestX,closestY,closestZ)) <= bot.r:
             self.bots.append(bot)
 
+    def distToOrigin(self):
+        closestX = max(self.corner.x, min(0, self.corner.x + self.w - 1))
+        closestY = max(self.corner.y, min(0, self.corner.y + self.h - 1))
+        closestZ = max(self.corner.z, min(0, self.corner.z + self.d - 1))
+
+        closestLoc = Location(closestX, closestY, closestZ)
+        return closestLoc.distTo(Location(0,0,0))
+
     def getStr(self):
         return "Box @ {}\t{}x{}x{}\t(v={}):\t{} bots".format(self.corner.getStr(), self.w, self.h, self.d, self.vol, len(self.bots))
 
@@ -102,15 +110,18 @@ iteration=0
 foundOneVolBox = False
 while not foundOneVolBox:
 
-    maxBots = 0
-    maxVol  = 10000000000000000000000000000000000000
-    currBox = None
+    currBox = boxes[0]
     currBoxIdx = 0
     for idx,b in enumerate(boxes):
-        if len(b.bots) > maxBots:
+        if len(b.bots) > len(currBox.bots):
             currBox = b
             currBoxIdx = idx
-            maxBots = len(b.bots)
+        elif len(b.bots) == len(currBox.bots) and b.distToOrigin() < currBox.distToOrigin():
+            currBox = b
+            currBoxIdx = idx
+        elif len(b.bots) == len(currBox.bots) and b.distToOrigin() == currBox.distToOrigin() and b.vol < currBox.vol:
+            currBox = b
+            currBoxIdx = idx
 
     if currBox.vol == 1:
         foundOneVolBox = True
@@ -184,6 +195,7 @@ while not foundOneVolBox:
     #print "----------------"
     #for idx, v in enumerate(subVols):
     #    print v.getStr()
+
 print "======================"
 maxBots = 0
 optimalBox = None
@@ -197,5 +209,6 @@ for idx,b in enumerate(boxes):
 print "----------------"
 print "optimal location:"
 print optimalBox.getStr()
+print "--> dist to origin = {}".format(optimalBox.distToOrigin())
 
 
